@@ -9,9 +9,11 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.tags.Tag;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -24,8 +26,28 @@ public class OpenApiConfig {
 
     public static final String SECURITY_SCHEME_NAME = "bearerAuth";
 
+    @Value("${app.openapi.prod-url:https://jobtrack-production-b276.up.railway.app}")
+    private String prodUrl;
+
+    @Value("${app.openapi.local-url:http://localhost:8080}")
+    private String localUrl;
+
     @Bean
     public OpenAPI customOpenAPI() {
+        List<Server> servers = new ArrayList<>();
+
+        if (prodUrl != null && !prodUrl.isBlank()) {
+            servers.add(new Server()
+                    .url(prodUrl)
+                    .description("Production Server (Railway)"));
+        }
+
+        if (localUrl != null && !localUrl.isBlank()) {
+            servers.add(new Server()
+                    .url(localUrl)
+                    .description("Local Development Server"));
+        }
+
         return new OpenAPI()
                 .info(new Info()
                         .title("JobTrack REST API")
@@ -44,11 +66,7 @@ public class OpenApiConfig {
                         .license(new License()
                                 .name("MIT License")
                                 .url("https://opensource.org/licenses/MIT")))
-                .servers(List.of(
-                        new Server()
-                                .url("http://localhost:8080")
-                                .description("Local Development Server")
-                ))
+                .servers(servers)
                 .tags(Arrays.asList(
                         new Tag().name("Authentication").description("User registration, authentication login, and profile operations"),
                         new Tag().name("Job Applications").description("Full CRUD operations, search, filtering, and status progression for job applications"),

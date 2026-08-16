@@ -26,6 +26,8 @@ class OpenApiActuatorTest {
                 .andExpect(jsonPath("$.openapi", startsWith("3.")))
                 .andExpect(jsonPath("$.info.title").value("JobTrack REST API"))
                 .andExpect(jsonPath("$.info.version").value("1.0.0"))
+                .andExpect(jsonPath("$.servers", hasSize(greaterThanOrEqualTo(1))))
+                .andExpect(jsonPath("$.servers[0].url").value("https://jobtrack-production-b276.up.railway.app"))
                 .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.type").value("http"))
                 .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"))
                 .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.bearerFormat").value("JWT"))
