@@ -41,6 +41,30 @@ JobTrack is an enterprise-grade, containerized, full-stack career pipeline and j
 
 ---
 
+## 📸 Application Screenshots
+
+### Dashboard
+
+![JobTrack Dashboard](docs/screenshots/dashboard.png)
+
+### Job Application Management
+
+![Job Application Management](docs/screenshots/application.png)
+
+### Interview Tracking
+
+![Interview Tracking](docs/screenshots/interviews.png)
+
+### Follow-Up Management
+
+![Follow-Up Management](docs/screenshots/followups.png)
+
+### Career Analytics
+
+![Career Analytics](docs/screenshots/analytics.png)
+
+---
+
 ## 🏗️ Architecture Overview
 
 The application follows a decoupled, production-ready multi-tier architecture:
