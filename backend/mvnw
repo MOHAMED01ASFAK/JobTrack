@@ -1,0 +1,36 @@
+#!/bin/sh
+# ----------------------------------------------------------------------------
+# Apache Maven Wrapper startup script for POSIX systems
+# ----------------------------------------------------------------------------
+
+export MAVEN_PROJECTBASEDIR=${MAVEN_PROJECTBASEDIR:-"$(cd "$(/usr/bin/dirname "$0")" && pwd)"}
+BASE_DIR="$MAVEN_PROJECTBASEDIR"
+WDIR="$BASE_DIR/.mvn/wrapper"
+
+WRAPPER_PROPERTIES="$WDIR/maven-wrapper.properties"
+
+if [ -f "$WDIR/maven-wrapper.jar" ]; then
+    WRAPPER_JAR="$WDIR/maven-wrapper.jar"
+    exec java $MAVEN_OPTS -jar "$WRAPPER_JAR" "$@"
+fi
+
+if [ -n "$JAVA_HOME" ]; then
+    JAVACMD="$JAVA_HOME/bin/java"
+else
+    JAVACMD="java"
+fi
+
+# Fallback: Find maven in ~/.m2 or download
+MAVEN_VERSION=$(grep 'distributionUrl' "$WRAPPER_PROPERTIES" | sed -e 's/.*apache-maven-\(.*\)-bin.zip/\1/')
+MAVEN_DIR="$HOME/.m2/wrapper/dists/apache-maven-$MAVEN_VERSION/apache-maven-$MAVEN_VERSION"
+
+if [ ! -x "$MAVEN_DIR/bin/mvn" ]; then
+    echo "Downloading Maven $MAVEN_VERSION..."
+    mkdir -p "$HOME/.m2/wrapper/dists/apache-maven-$MAVEN_VERSION"
+    DIST_URL=$(grep 'distributionUrl' "$WRAPPER_PROPERTIES" | cut -d= -f2)
+    curl -sSLo /tmp/maven.zip "$DIST_URL"
+    unzip -q /tmp/maven.zip -d "$HOME/.m2/wrapper/dists/apache-maven-$MAVEN_VERSION"
+    rm -f /tmp/maven.zip
+fi
+
+exec "$MAVEN_DIR/bin/mvn" "$@"

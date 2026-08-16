@@ -1,0 +1,103 @@
+# ===================================================================
+# JobTrack - Production-Ready Docker Compose Multi-Service Stack
+# Services: MySQL 8.0 Database, Spring Boot Backend, React SPA Frontend
+# ===================================================================
+
+services:
+  # -----------------------------------------------------------------
+  # 1. Database Service: MySQL 8.0
+  # -----------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: jobtrack-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-jobtrack_db}
+      MYSQL_USER: ${DB_USER:-jobtrack_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-jobtrack_pass}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret_pass}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+    networks:
+      - jobtrack-network
+
+  # -----------------------------------------------------------------
+  # 2. Backend REST API Service: Spring Boot (Java 21 LTS)
+  # -----------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jobtrack-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-jobtrack_db}
+      DB_USER: ${DB_USER:-jobtrack_user}
+      DB_USERNAME: ${DB_USER:-jobtrack_user}
+      DB_PASSWORD: ${DB_PASSWORD:-jobtrack_pass}
+      DB_URL: jdbc:mysql://mysql:3306/${DB_NAME:-jobtrack_db}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      JWT_SECRET: ${JWT_SECRET:-JobTrackSecretKeyForJwtAuthenticationMustBeAtLeast256BitsLongForSecurityCompliance2026!}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - jobtrack-network
+
+  # -----------------------------------------------------------------
+  # 3. Frontend Web Client Service: React/Vite + Nginx Reverse Proxy
+  # -----------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: jobtrack-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:80/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - jobtrack-network
+
+# -------------------------------------------------------------------
+# Persistent Storage Volumes
+# -------------------------------------------------------------------
+volumes:
+  mysql_data:
+    name: jobtrack_mysql_data
+    driver: local
+
+# -------------------------------------------------------------------
+# Isolated Internal Bridge Network
+# -------------------------------------------------------------------
+networks:
+  jobtrack-network:
+    name: jobtrack_network
+    driver: bridge
