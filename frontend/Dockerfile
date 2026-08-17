@@ -37,6 +37,11 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy custom Nginx configuration for SPA routing & API reverse proxy
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Copy dynamic backend URL entrypoint script (supports Railway / Cloud overrides)
+COPY 40-jobtrack-backend-url.sh /docker-entrypoint.d/40-jobtrack-backend-url.sh
+RUN sed -i 's/\r$//' /docker-entrypoint.d/40-jobtrack-backend-url.sh && \
+    chmod +x /docker-entrypoint.d/40-jobtrack-backend-url.sh
+
 # Expose HTTP port
 EXPOSE 80
 
