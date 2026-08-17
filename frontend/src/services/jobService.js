@@ -128,16 +128,15 @@ export const jobService = {
   },
 
   /**
-   * Test backend connectivity / health check.
+   * Test backend connectivity / health check against public Actuator endpoint.
    * @returns {Promise<boolean>}
    */
   async checkHealth() {
     try {
-      const response = await fetch('/api/v1/auth/me', {
+      const response = await fetch('/actuator/health', {
         method: 'GET',
-        headers: getAuthHeaders(),
       });
-      return response.status !== 502 && response.status !== 503 && response.status !== 504;
+      return response.ok;
     } catch {
       return false;
     }

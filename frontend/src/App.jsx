@@ -94,6 +94,12 @@ function JobTrackApp() {
   // Load all jobs from REST API
   const fetchJobsData = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) setIsRefreshing(true);
+    if (!isAuthenticated) {
+      setJobs([]);
+      setLoading(false);
+      if (isManualRefresh) setIsRefreshing(false);
+      return;
+    }
     try {
       const data = await jobService.getAllJobs();
       setJobs(data);
@@ -103,16 +109,21 @@ function JobTrackApp() {
       }
     } catch (err) {
       console.error('Failed to fetch job applications:', err);
-      setIsBackendConnected(false);
-      addToast(
-        err.message || 'Unable to connect to backend server on /api/v1/jobs',
-        'error'
-      );
+      if (err.status === 401) {
+        // Session expired or unauthenticated; backend is still healthy
+        setIsBackendConnected(true);
+      } else {
+        setIsBackendConnected(false);
+        addToast(
+          err.message || 'Unable to connect to backend server on /api/v1/jobs',
+          'error'
+        );
+      }
     } finally {
       setLoading(false);
       if (isManualRefresh) setIsRefreshing(false);
     }
-  }, [addToast]);
+  }, [isAuthenticated, addToast]);
 
   // Load all follow-up reminders
   const fetchFollowUpsData = useCallback(async () => {
@@ -142,6 +153,15 @@ function JobTrackApp() {
       setSelectedJobInterviews([]);
     }
   }, [isAuthenticated]);
+
+  // Initial backend health check
+  useEffect(() => {
+    async function verifyBackendHealth() {
+      const isHealthy = await jobService.checkHealth();
+      setIsBackendConnected(isHealthy);
+    }
+    verifyBackendHealth();
+  }, []);
 
   // Re-fetch data on user change
   useEffect(() => {
@@ -522,7 +542,9 @@ function JobTrackApp() {
         isBackendConnected={isBackendConnected}
         isRefreshing={isRefreshing}
         isExporting={isExporting}
-        onRefresh={() => {
+        onRefresh={async () => {
+          const healthy = await jobService.checkHealth();
+          setIsBackendConnected(healthy);
           fetchJobsData(true);
           fetchFollowUpsData();
         }}
